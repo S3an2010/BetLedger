@@ -67,6 +67,11 @@
     (ok str)
     ERR-EMPTY-STRING))
 
+(define-private (validate-sport-string (str (string-utf8 50)))
+  (if (> (len str) u0)
+    (ok str)
+    ERR-EMPTY-STRING))
+
 (define-private (validate-time (time uint))
   (if (> time block-height)
     (ok time)
@@ -91,7 +96,7 @@
   (begin
     ;; Validate inputs and extract safe values
     (let ((validated-name (try! (validate-string-not-empty name)))
-          (validated-sport (try! (validate-string-not-empty sport)))
+          (validated-sport (try! (validate-sport-string sport)))
           (validated-start-time (try! (validate-time start-time)))
           (validated-time-range (try! (validate-time-range start-time end-time)))
           (event-id (var-get event-counter)))
@@ -321,11 +326,10 @@
   (let ((existing-bets (map-get? user-bets { user: user })))
     (match existing-bets
       existing 
-        (let ((current-list (get bet-list existing))
-              (new-list (unwrap! (as-max-len? (append current-list bet-id) u100) ERR-LIST-TOO-LARGE)))
+        (let ((current-list (get bet-list existing)))
           (map-set user-bets
             { user: user }
-            { bet-list: new-list })
+            { bet-list: (unwrap! (as-max-len? (append current-list bet-id) u100) ERR-LIST-TOO-LARGE) })
           (ok true))
       (begin
         (map-set user-bets
